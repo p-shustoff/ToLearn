@@ -1,8 +1,11 @@
+#include <stdio.h>
 #include <termios.h>
 #include <unistd.h>
 #include <string.h>
 
 #include "str_handling.h"
+
+#define BUFFSIZE 20
 
 void start_terminal()
 {
@@ -14,6 +17,26 @@ void start_terminal()
 	tcsetattr(0, TCSANOW, &ts_new);
 
 	printf(">");
-	while (
+	char buffer[BUFFSIZE] = {0};
+
+	for (int i = 0; i < BUFFSIZE - 1; i++) {
+		
+		ssize_t bytes_read = read(0, &buffer[i], 1);
+		
+		if (bytes_read == -1) {
+			perror("Error of reading);
+			exit(1);
+		}
+		
+		if (('a' <= buffer[i] && buffer[i] <= 'z') || ('A' <= buffer[i] && buffer[i] <= 'Z')) {
+			putchar(buffer[i]);
+		} 
+		else {
+			if (buffer[i] == '\n') {
+				
+			}
+		}	
+	}
+
 	tcsetattr(0, TCSANOW, &ts_old);
 }
