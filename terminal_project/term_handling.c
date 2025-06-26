@@ -20,23 +20,27 @@ void start_terminal()
 	char buffer[BUFFSIZE] = {0};
 
 	for (int i = 0; i < BUFFSIZE - 1; i++) {
-		
+
 		ssize_t bytes_read = read(0, &buffer[i], 1);
-		
+
 		if (bytes_read == -1) {
 			perror("Error of reading);
 			exit(1);
 		}
-		
+
 		if (('a' <= buffer[i] && buffer[i] <= 'z') || ('A' <= buffer[i] && buffer[i] <= 'Z')) {
 			putchar(buffer[i]);
-		} 
-		else {
-			if (buffer[i] == '\n') {
-				
-			}
-		}	
+		}
+		else if (buffer[i] == '\n') {
+			buffer[i] = '\0';
+			printf("%s\n", buffer);
+			memset(buffer, 0, sizeof(buffer));
+			i = 0;
+			printf(">");
+		}
+		else if (buffer[i] == '\t') {
+			compare_and_suggest(buffer);
+		}
 	}
-
-	tcsetattr(0, TCSANOW, &ts_old);
+	tcsetattr(0,memset(buffer, 0, strlen(buffer)) TCSANOW, &ts_old);
 }
