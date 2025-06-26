@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "dict_handling.c"
+#include "dict_handling.h"
 
 void read_string_from_file_to_dict(int fd, char buffer[DICT_LEN][COMMAND_LEN]) {
     
@@ -36,8 +36,7 @@ void read_string_from_file_to_dict(int fd, char buffer[DICT_LEN][COMMAND_LEN]) {
     }
 }
 
-
-static void print_strings_from_buffer(char buffer[DICT_LEN][COMMAND_LEN])
+void print_strings_from_buffer(char buffer[DICT_LEN][COMMAND_LEN])
 {
 	char (*tmp)[COMMAND_LEN] = buffer;
 	for (int j = 0; j < DICT_LEN; j++, tmp++) {
