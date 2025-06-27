@@ -36,17 +36,22 @@ void start_terminal(char dict[DICT_LEN][COMMAND_LEN])
 		}
 		else if (buffer[i] == '\n') {
 			buffer[i] = '\0';
-			printf("%s\n", buffer);
+			putchar('\n');
+			printf("First sym is: %c\n", buffer[0]);
+			printf("Entered data is: %s\n", buffer);
+			fflush(stdout);
 			memset(buffer, 0, sizeof(buffer));
 			i = 0;
 			printf(">");
 			fflush(stdout);
 		}
+		/*
 		else if (buffer[i] == '\t') {
 			buffer[i] = '\0';
 			i--;
 			compare_and_suggest(buffer, dict);
 		}
+		*/
 	}
 	tcsetattr(0, TCSANOW, &ts_old);
 }

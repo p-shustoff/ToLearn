@@ -27,7 +27,7 @@ int main(int argc, char const *argv[])
 	read_string_from_file_to_dict(fd, buffer);
 	close(fd);
 	
-	// print_strings_from_buffer(buffer);
+	print_strings_from_buffer(buffer);
 
 	// 4.Starting terminal session
 	start_terminal(buffer);
