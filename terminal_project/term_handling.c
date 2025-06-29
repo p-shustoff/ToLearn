@@ -3,55 +3,72 @@
 #include <termios.h>
 #include <unistd.h>
 #include <string.h>
+#include <ctype.h>
 #include "term_handling.h"
 #include "str_handling.h"
 
-#define BUFFSIZE 20
+#define BUFFER_SIZE 20
 
-void start_terminal(char dict[DICT_LEN][COMMAND_LEN])
-{
-	struct termios ts_old, ts_new;
-	
-	tcgetattr(0, &ts_old);
-	memcpy(&ts_new, &ts_old, sizeof(ts_old));
-	ts_new.c_lflag &= ~(ICANON | ECHO);;
-	tcsetattr(0, TCSANOW, &ts_new);
+void start_terminal(char dict[DICT_LEN][COMMAND_LEN]) {
+    struct termios old_termios, new_termios;
+    char buffer[BUFFER_SIZE];
+    int i = 0;
 
-	putchar('>');
-   	fflush(stdout);
-	char buffer[BUFFSIZE] = {0};
+    // Save old terminal settings
+    tcgetattr(STDIN_FILENO, &old_termios);
+    new_termios = old_termios;
 
-	for (int i = 0; i < BUFFSIZE - 1; i++) {
+    // Configure new terminal settings
+    new_termios.c_lflag &= ~(ICANON | ECHO);  // Non-canonical mode, no echo
+    new_termios.c_cc[VMIN] = 1;  // Read at least 1 character
+    new_termios.c_cc[VTIME] = 0; // No timeout
+    tcsetattr(STDIN_FILENO, TCSANOW, &new_termios);
 
-		ssize_t bytes_read = read(0, &buffer[i], 1);
+    printf("> ");
+    fflush(stdout);
 
-		if (bytes_read == -1) {
-			perror("Error of reading");
-			exit(1);
-		}
+    while (1) {
+        char c = getchar();
 
-		if (('a' <= buffer[i] && buffer[i] <= 'z') || ('A' <= buffer[i] && buffer[i] <= 'Z')) {
-			putchar(buffer[i]);
-			fflush(stdout);
-		}
-		else if (buffer[i] == '\n') {
-			buffer[i] = '\0';
-			putchar('\n');
-			printf("First sym is: %c\n", buffer[0]);
-			printf("Entered data is: %s\n", buffer);
-			fflush(stdout);
-			memset(buffer, 0, sizeof(buffer));
-			i = 0;
-			printf(">");
-			fflush(stdout);
-		}
-		/*
-		else if (buffer[i] == '\t') {
-			buffer[i] = '\0';
-			i--;
-			compare_and_suggest(buffer, dict);
-		}
-		*/
-	}
-	tcsetattr(0, TCSANOW, &ts_old);
+        if (i < BUFFER_SIZE - 1) {  // Leave space for null terminator
+            if (isalpha(c)) {  // More portable than range checks
+                buffer[i++] = c;
+                putchar(c);
+                fflush(stdout);
+            }
+            else if (c == '\n') {
+                buffer[i] = '\0';  // Proper null termination
+                
+                // Process completed input
+                printf("\nFirst character: %c\n", buffer[0]);
+                printf("Full input: %s\n", buffer);
+                
+                // Reset for next input
+                memset(buffer, 0, sizeof(buffer));
+                i = 0;
+                
+                printf("> ");
+                fflush(stdout);
+            }
+			else if (c == '\t') {
+				buffer[i] = '\0';
+				compare_and_suggest(buffer, dict);
+				i = 0;
+				printf("> ");
+				fflush(stdout);
+			}
+            // Add other character handlers (backspace, tabs, etc.) here
+        }
+        else {
+            // Handle buffer overflow
+            printf("\n[!] Input limit reached (%d chars)\n", BUFFER_SIZE - 1);
+            memset(buffer, 0, sizeof(buffer));
+            i = 0;
+            printf("> ");
+            fflush(stdout);
+        }
+    }
+
+    // Restore original terminal settings (unreachable in this example)
+    tcsetattr(STDIN_FILENO, TCSANOW, &old_termios);
 }
