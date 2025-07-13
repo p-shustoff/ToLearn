@@ -52,9 +52,13 @@ void start_terminal(char dict[DICT_LEN][COMMAND_LEN]) {
             }
 			else if (c == '\t') {
 				buffer[i] = '\0';
-				compare_and_suggest(buffer, dict);
-				i = 0;
-				printf("> ");
+				if (strlen(buffer) >= 1) {
+					compare_and_suggest(buffer, dict);
+				}
+				else {
+					printf("Buffer is empty");
+				}
+				printf("\n> %s", buffer);
 				fflush(stdout);
 			}
             // Add other character handlers (backspace, tabs, etc.) here
