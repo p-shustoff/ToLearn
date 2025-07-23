@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "str_handling.h"
 
 struct Found_Str {
@@ -29,7 +30,7 @@ struct Found_Str *add_element(char *buffer, struct Found_Str *stored_data)
 	}
 	else {
 		struct Found_Str *tmp = add_element(buffer, stored_data->next);
-		next->pos = stored_data->pos =+ 1;
+		tmp->pos = stored_data->pos =+ 1;
 		stored_data->next = tmp;
 		free(tmp);
 		return stored_data;
@@ -42,10 +43,7 @@ void compare_and_suggest(char buffer[COMMAND_LEN], char dict[DICT_LEN][COMMAND_L
 	for (int i = 0; i < DICT_LEN; i++) {
 		if (strncmp(buffer, dict[i], strlen(buffer)) == 0) {
 			counter++;
-			printf("%s\n", dict[i]);
-		}	
-	}
-	if (counter) {;
-		printf("%s", buffer);
+			printf("\n%s", dict[i]);
+		}
 	}
 }
