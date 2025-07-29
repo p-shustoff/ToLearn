@@ -40,8 +40,11 @@ void start_terminal(char dict[DICT_LEN][COMMAND_LEN]) {
                 buffer[i] = '\0';  // Proper null termination
                 
                 // Process completed input
-                printf("\nFirst character: %c\n", buffer[0]);
-                printf("Full input: %s\n", buffer);
+                
+				/* Debugging print */
+				// printf("\nFirst character: %c\n", buffer[0]);
+                // printf("Full input: %s\n", buffer);
+				putchar('\n');
                 
                 // Reset for next input
                 memset(buffer, 0, sizeof(buffer));
@@ -54,12 +57,11 @@ void start_terminal(char dict[DICT_LEN][COMMAND_LEN]) {
 				buffer[i] = '\0';
 				if (strlen(buffer) >= 1) {
 					compare_and_suggest(buffer, dict);
+					i = strlen(buffer) + 1;
 				}
 				else {
-					printf("Buffer is empty");
+					printf("Buffer is empty\n");
 				}
-				printf("\n> %s", buffer);
-				fflush(stdout);
 			}
             // Add other character handlers (backspace, tabs, etc.) here
         }
