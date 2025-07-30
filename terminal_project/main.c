@@ -15,20 +15,31 @@ int main(int argc, char const *argv[])
 	}
 	
 	// 2. Opening file and error handling
-	int fd = open("dict.txt", O_RDONLY);
+	int fd_dict = open(argv[1], O_RDONLY);
 
-	if (fd == -1) {
-		perror("Error opening file");
+	if (fd_dict == -1) {
+		perror("Error opening dict file");
 		exit(2);
 	}
 
 	// 3.Mapping strings from file to RAM and closing fd 
 	char buffer[DICT_LEN][COMMAND_LEN] = {0};
-	read_string_from_file_to_dict(fd, buffer);
-	close(fd);
+	read_string_from_file_to_dict(fd_dict, buffer);
+	close(fd_dict);
 
-	// 4.Starting terminal session
-	start_terminal(buffer);
+	// 4. Open destination file and error handling
+	int fd_dest = open(argv[2], O_WRONLY | O_APPEND | O_CREAT);
+	
+	if (fd_dest == -1) {
+		perror("Error opening destination file");
+		exit(3);
+	}
+
+	// 5.Starting terminal session
+	start_terminal(buffer, fd_dest);
+	
+	// 6.Closing open descriptor
+	close(fd_dest);
 
     return 0;
 }

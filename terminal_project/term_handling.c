@@ -9,7 +9,7 @@
 
 #define BUFFER_SIZE 20
 
-void start_terminal(char dict[DICT_LEN][COMMAND_LEN]) {
+void start_terminal(char dict[DICT_LEN][COMMAND_LEN], int fd_dest) {
     struct termios old_termios, new_termios;
     char buffer[BUFFER_SIZE];
     int i = 0;
@@ -44,8 +44,16 @@ void start_terminal(char dict[DICT_LEN][COMMAND_LEN]) {
 				/* Debugging print */
 				// printf("\nFirst character: %c\n", buffer[0]);
                 // printf("Full input: %s\n", buffer);
+
 				putchar('\n');
-                
+
+                ssize_t bytes_written = write(fd_dest, buffer, sizeof(buffer));
+
+				if (bytes_written == -1) {
+					perror("Error writing to destination file");
+					exit(4);
+				}
+
                 // Reset for next input
                 memset(buffer, 0, sizeof(buffer));
                 i = 0;
