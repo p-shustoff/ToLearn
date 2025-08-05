@@ -1,8 +1,62 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #include "dict_handling.h"
+
+#define ALPHABET_SIZE 26
+
+struct Trie_Node {
+	struct Trie_Node *children[ALPHABET_SIZE]
+	bool isEndOfWord;
+};
+
+struct Trie_Node *get_Node() 
+{
+	struct Trie_Node *pNode = malloc(sizeof(struct Trie_Node));
+	pNode->isEndOfWord = false;
+
+	for (int i = 0; i < ALPHABET_SIZE; i++) {
+		pNode->children[i] = NULL;
+	}
+
+	return pNode;
+}
+
+void insert(struct TrieNode *root, const char *key)
+{
+	struct TrieNode *pCrawl = root;
+
+	for (int i = 0; i < strlen(key); i++)
+	{
+		int index = key[i] - 'a';
+		if (!pCrawl->children[index])
+			pCrawl->children[index] = getNode();
+
+		pCrawl = pCrawl->children[index];
+	}
+
+	pCrawl->isEndOfWord = true;
+}
+
+bool search(struct TrieNode *root, const char *key)
+{
+	struct TrieNode *pCrawl = root;
+
+	for (int i = 0; i < strlen(key); i++)
+	{
+		int index = key[i] - 'a';
+		if (!pCrawl->children[index])
+			return false;
+
+		pCrawl = pCrawl->children[index];
+	}
+
+	return (pCrawl->isEndOfWord);
+}
+
+
 
 void read_string_from_file_to_dict(int fd, char buffer[DICT_LEN][COMMAND_LEN]) {
     
