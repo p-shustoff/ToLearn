@@ -18,7 +18,7 @@ struct Found_Str *initialize(char *buffer)
 	}
 	data->string = buffer;
 	data->prev = NULL;
-	data->len = 0;
+	data->len = 1;
 	return data;
 }
 
@@ -53,36 +53,39 @@ void print_list(struct Found_Str *cur)
 	printf("\n%s", cur->string);
 }
 
-void compare_and_suggest(char buffer[COMMAND_LEN], char dict[DICT_LEN][COMMAND_LEN])
+unsigned int compare_and_suggest(char buffer[COMMAND_LEN], char dict[DICT_LEN][COMMAND_LEN])
 {
 	struct Found_Str *data = NULL;
-	
+	unsigned int result = 0;
 	for (int i = 0; i < DICT_LEN; i++) {
 		if (strncmp(buffer, dict[i], strlen(buffer)) == 0) {
 			data = add_element(dict[i], data);
-			
+			result++;
 			/* Debugging print here to verify len value*/
 			// printf("\n%d", data->len);
-
 		}
 	}
 
 	/* If only one match is found, fill the buffer with leftover symbols and push them to stdout */
-	
-	if (data->len == 0) {
+	if (result == 0) {
+		return 0;
+	} else if (result == 1) {
 		char *temp_str = data->string;
 		temp_str += strlen(buffer);
-		printf("%s", temp_str);
+		if (*temp_str) {
+			printf("%s", temp_str);
+		} else {
+			return 0;
+		}
 		strcat(buffer, temp_str);
-	}
-
-	if (data->len > 0) {
+	} else if (result > 1) {
 		print_list(data);
-		printf("\n> %s", buffer);
-		fflush(stdout);
+		putchar('\n');
+		// fflush(stdout);
 	}
 
 	// Emptying dynamically allocated list
 	empty_list(data);
+	return result;
 }
 
