@@ -7,14 +7,14 @@
 
 #define ALPHABET_SIZE 26
 
-struct Trie_Node {
-	struct Trie_Node *children[ALPHABET_SIZE]
+struct TrieNode {
+	struct TrieNode *children[ALPHABET_SIZE]
 	bool isEndOfWord;
 };
 
-struct Trie_Node *get_Node() 
+struct TrieNode *get_Node() 
 {
-	struct Trie_Node *pNode = malloc(sizeof(struct Trie_Node));
+	struct TrieNode *pNode = malloc(sizeof(struct TrieNode));
 	pNode->isEndOfWord = false;
 
 	for (int i = 0; i < ALPHABET_SIZE; i++) {
@@ -58,44 +58,16 @@ bool search(struct TrieNode *root, const char *key)
 
 
 
-void read_string_from_file_to_dict(int fd, char buffer[DICT_LEN][COMMAND_LEN]) {
-    
-	ssize_t bytes_read;
-    int dict_ind = 0;
-    int command_ind = 0;
-
-    while (dict_ind < DICT_LEN && 
-           (bytes_read = read(fd, &buffer[dict_ind][command_ind], 1)) > 0) {
-        if (bytes_read == -1) {
-            perror("Error reading file");
-            exit(3);
-        }
-
-        if (buffer[dict_ind][command_ind] == '\n') {
-            buffer[dict_ind][command_ind] = '\0';  // Replace '\n' to '\0'
-            dict_ind++;
-            command_ind = 0;  // Reset for the new sring
-        } else {
-            command_ind++;
-            if (command_ind >= COMMAND_LEN - 1) {  //  Overflow handling
-                buffer[dict_ind][COMMAND_LEN - 1] = '\0'; 
-                dict_ind++;
-                command_ind = 0;
-            }
-        }
-    }
-
-    if (command_ind > 0 && dict_ind < DICT_LEN) {
-        buffer[dict_ind][command_ind] = '\0';
-    }
+void read_string_from_file_to_dict(FILE *file, struct TrieNode *root) {
+	char buffer[COMMAND_LEN];
+	while (fscanf(file, "%20s", buffer) == 1) {
+		insert(root, buffer);
+	}
 }
 
-void print_strings_from_buffer(char buffer[DICT_LEN][COMMAND_LEN])
+        
+
+void print_strings_from_buffer(struct TrieNode *root)
 {
-	char (*tmp)[COMMAND_LEN] = buffer;
-	for (int j = 0; j < DICT_LEN; j++, tmp++) {
-		if((*tmp)[0] != '\0') {
-			printf("%s\n", *tmp);
-		}
-	}
+	if (!root->isEndOfWord) 
 }

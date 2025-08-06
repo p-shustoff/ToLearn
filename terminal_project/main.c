@@ -15,17 +15,17 @@ int main(int argc, char const *argv[])
 	}
 	
 	// 2. Opening file and error handling
-	int fd_dict = open(argv[1], O_RDONLY);
+	FILE *file = fdopen(argv[1], "r");
 
-	if (fd_dict == -1) {
+	if (file == NULL) {
 		perror("Error opening dict file");
 		exit(2);
 	}
 
 	// 3.Mapping strings from file to RAM and closing fd 
-	char buffer[DICT_LEN][COMMAND_LEN] = {0};
+
 	read_string_from_file_to_dict(fd_dict, buffer);
-	close(fd_dict);
+	fclose(file);
 
 	// 4. Open destination file and error handling
 	int fd_dest = open(argv[2], O_WRONLY | O_APPEND | O_CREAT);
