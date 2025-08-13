@@ -1,18 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <stdbool.h>
+#include <string.h>
 
 #include "dict_handling.h"
 
-#define ALPHABET_SIZE 26
-
-struct TrieNode {
-	struct TrieNode *children[ALPHABET_SIZE]
-	bool isEndOfWord;
-};
-
-struct TrieNode *get_Node() 
+struct TrieNode *getNode()
 {
 	struct TrieNode *pNode = malloc(sizeof(struct TrieNode));
 	pNode->isEndOfWord = false;
@@ -24,7 +17,7 @@ struct TrieNode *get_Node()
 	return pNode;
 }
 
-void insert(struct TrieNode *root, const char *key)
+static void insert(struct TrieNode *root, const char *key)
 {
 	struct TrieNode *pCrawl = root;
 
@@ -65,9 +58,23 @@ void read_string_from_file_to_dict(FILE *file, struct TrieNode *root) {
 	}
 }
 
-        
 
-void print_strings_from_buffer(struct TrieNode *root)
+static void printTrieHelper(struct TrieNode *root, char *buffer, int depth)
 {
-	if (!root->isEndOfWord) 
+	if (root->isEndOfWord) {
+		buffer[depth] = '\0';
+		printf("%s\n", buffer);
+	}
+	for (int i = 0; i < ALPHABET_SIZE; i++) {
+		if (root->children[i]) {
+			buffer[depth] = 'a' + i;
+			printTrieHelper(root->children[i], buffer, depth+1);
+		}
+	}
+}
+
+void print_strings_from_buffer(struct TrieNode *root) 
+{
+	char buffer[256];
+	printTrieHelper(root, buffer, 0);
 }

@@ -15,18 +15,22 @@ int main(int argc, char const *argv[])
 	}
 	
 	// 2. Opening file and error handling
-	FILE *file = fdopen(argv[1], "r");
+	FILE *file = fopen(argv[1], "r");
 
 	if (file == NULL) {
 		perror("Error opening dict file");
 		exit(2);
 	}
 
-	// 3.Mapping strings from file to RAM and closing fd 
+	// 3.Mapping strings from file to RAM and closing fd
 
-	read_string_from_file_to_dict(fd_dict, buffer);
+	struct TrieNode *dict_buffer = getNode();
+
+	read_string_from_file_to_dict(file, dict_buffer);
+	print_strings_from_buffer(dict_buffer);
 	fclose(file);
 
+	
 	// 4. Open destination file and error handling
 	int fd_dest = open(argv[2], O_WRONLY | O_APPEND | O_CREAT);
 	
@@ -36,10 +40,10 @@ int main(int argc, char const *argv[])
 	}
 
 	// 5.Starting terminal session
-	start_terminal(buffer, fd_dest);
+	start_terminal(dict_buffer, fd_dest);
 	
 	// 6.Closing open descriptor
 	close(fd_dest);
-
+	*/
     return 0;
 }
