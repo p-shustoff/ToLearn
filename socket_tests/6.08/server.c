@@ -66,6 +66,7 @@ int main(int argc, char *argv[])
 			exit(6);
 		}
 		shutdown(accept_fd, 2);
+		close(accept_fd);
 	}
 	close(sd);
 	return 0;
