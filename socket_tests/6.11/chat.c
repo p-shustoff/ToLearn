@@ -1,7 +1,11 @@
 #include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/select.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <errno.h>
 
 
@@ -21,14 +25,14 @@ int main(int argc, char *argv[])
         exit(2);
     }
 
-	int fd_read = open(argv[1], O_RDONLY);
+	int fd_read = open(argv[1], O_RDONLY | O_NONBLOCK);
 	
 	if (fd_read == -1) {
 		perror("Error opening reading pipe\n");
 		exit(3);
 	}
 
-	int fd_write = open(argv[2], O_WRONLLY | O_NONBLOCK);
+	int fd_write = open(argv[2], O_WRONLY);
 	
 	if (fd_write == -1) {
 		perror("Error opening writing pipe");
@@ -52,9 +56,26 @@ int main(int argc, char *argv[])
 
 		int ready = select(max_fd + 1, &readfds_cp, &writefds_cp, NULL, NULL);
 
-		
+		if (ready > 0) {
+        	if (FD_ISSET(fd_read, &readfds_cp)) {
+            	char buffer[256] = {0};
+                ssize_t bytes = read(fd_read, buffer, sizeof(buffer) - 1);
+                if (bytes > 0) {
+                    buffer[bytes] = '\0';
+                    printf("Received: %s", buffer);
+             	}
+         	}
+
+            if (FD_ISSET(fd_write, &writefds_cp)) {
+                char user_input[256] = {0};
+				printf(">>: ");
+				scanf("%s", user_input);
+                write(fd_write, user_input, strlen(user_input));
+                printf("Written %s", user_input);
+            }
+        }
 	}
-	
+
 	close(fd_read);
 	close(fd_write);
 	return 0;
