@@ -26,7 +26,25 @@ void add_client(int socket, struct sockaddr_in address)
 
 void remove_client(int socket)
 {
-	// TODO
+	client_node_t *prev = NULL;
+	client_node_t *current = clients_head;
+
+	while(current != NULL) {
+		if (current->socket == socket) {
+			if (prev == NULL) {
+				clients_head = current->next;
+			} else {
+				prev->next = current->next;
+			}
+			shutdown(current->socket, SHUT_RDWR);
+			close(current->socket);
+			free(current);
+			return;
+		}
+		prev = current;
+		current = current->next;
+	}
+	printf("Client with socket %d was not found\n", socket);
 }
 
 void free_all_clients()
