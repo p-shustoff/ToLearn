@@ -86,8 +86,7 @@ int main(int argc, char *argv[])
         exit(2);
     }
 
-	struct sockaddr_in server, client;
-    socklen_t addr_len = sizeof(client);
+	struct sockaddr_in server;
 
 	int port = atoi(argv[1]);
 
@@ -108,29 +107,70 @@ int main(int argc, char *argv[])
 	}
 
 	const char *message = "Ok";
+	struct timeval timeout;
 
 	while(1) {
 	
-		int fd, res;
-		fd_set readfds, writefds;
+		fd_set readfds;
+
+		// Assume max descriptor is server descriptor
+
 		int max_d = ls;
+			
+		// Setting sets to zero
 
 		FD_ZERO(&readfds);
-		FD_ZERO(&writefds);
 		FD_SET(ls, &readfds);
 
-		int accept_fd = accept(sd, (struct sockaddr*)&client, &addr_len);
+		client_node_t *current = clients_head;
 
-		if (accept_fd == -1) {
-			perror("Error acepting socket\n");
-			exit(5);
+		// Adding all clients fd to check readiness to write
+		while (current != NULL) {
+			FD_SET(current->socket, &readfds);
+			if (current->socket > max_d) {
+				max_d = current->socket;
+			}
+			current = current->next;
 		}
-		
-		char client_ip[INET_ADDRSTRLEN];
-		uint16_t client_port = ntohs(client.sin_port);
-	    inet_ntop(AF_INET, &client.sin_addr, client_ip, INET_ADDRSTRLEN);
-		printf("Accepted IP: %s PORT :%d\n", client_ip, client_port);
 
+		timeout.tv_sec = 5;
+		timeout.tv_usec = 0;
+
+		int res = select(max_d + 1, &readfds, NULL, NULL, NULL, &timeout);
+		
+		if (res == -1) {
+			if (errno == EINTR) {
+				printf("Signal arrived\n");
+			} else {
+				perror("Select error\n");
+			}
+			continue;
+		}
+
+		if (res == 0) {
+			printf("Timeout disconnect\n");
+			continue;
+		}
+
+		if (FD_ISSET(ls, &readfds)) {
+
+			struct sockaddr_in client;
+			socklen_t addr_len = sizeof(client);
+
+			int new_socket = accept(sd, (struct sockaddr*)&client, &addr_len);
+
+			if (new_socket == -1) {
+				perror("Error acepting socket\n");
+				continue;
+			} else {
+				add_client(new_socket, client);
+				char client_ip[INET_ADDRSTRLEN];
+				uint16_t client_port = ntohs(client.sin_port);
+				inet_ntop(AF_INET, &client.sin_addr, client_ip, INET_ADDRSTRLEN);
+				printf("Accepted! IP: %s PORT: %d\n", client_ip, client_port);
+			}
+		}
+		// TODO: Handle receiving data from client socket and writing data back to it
 		snprintf(status, sizeof(status), "IP: %s PORT: %d\n", client_ip, client_port);
 		ssize_t bytes_written = write(accept_fd, status, sizeof(status));
 		if (bytes_written == -1) {
