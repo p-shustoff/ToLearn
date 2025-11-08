@@ -6,6 +6,7 @@
 #include <sys/select.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <errno.h>
 
 typedef struct client_node {
 	int socket;
@@ -20,7 +21,7 @@ void add_client(int socket, struct sockaddr_in address)
 	client_node_t *new_client = malloc(sizeof(client_node_t));
 	new_client->socket = socket;
 	new_client->address = address;
-	new_clent->next = clients_head;
+	new_client->next = clients_head;
 	clients_head = new_client;
 }
 
@@ -64,7 +65,7 @@ int get_client_count()
 	int count = 0;
 	client_node_t *current = clients_head;
 	while (current != NULL) {
-		count++:
+		count++;
 		current = current->next;
 	}
 	return count;
@@ -106,8 +107,7 @@ int main(int argc, char *argv[])
 		exit(4);
 	}
 
-	const char *message = "Ok";
-	struct timeval timeout;
+	const char *greeting_message = "Ok";
 
 	while(1) {
 	
@@ -132,11 +132,12 @@ int main(int argc, char *argv[])
 			}
 			current = current->next;
 		}
-
+		
+		struct timeval timeout;
 		timeout.tv_sec = 5;
 		timeout.tv_usec = 0;
 
-		int res = select(max_d + 1, &readfds, NULL, NULL, NULL, &timeout);
+		int res = select(max_d + 1, &readfds, NULL, NULL, &timeout);
 		
 		if (res == -1) {
 			if (errno == EINTR) {
@@ -157,7 +158,7 @@ int main(int argc, char *argv[])
 			struct sockaddr_in client;
 			socklen_t addr_len = sizeof(client);
 
-			int new_socket = accept(sd, (struct sockaddr*)&client, &addr_len);
+			int new_socket = accept(ls, (struct sockaddr*)&client, &addr_len);
 
 			if (new_socket == -1) {
 				perror("Error acepting socket\n");
@@ -170,17 +171,37 @@ int main(int argc, char *argv[])
 				printf("Accepted! IP: %s PORT: %d\n", client_ip, client_port);
 			}
 		}
-		// TODO: Handle receiving data from client socket and writing data back to it
-		snprintf(status, sizeof(status), "IP: %s PORT: %d\n", client_ip, client_port);
-		ssize_t bytes_written = write(accept_fd, status, sizeof(status));
-		if (bytes_written == -1) {
-			perror("Error writing to socket\n");
-			exit(6);
+
+		current = clients_head;
+
+		while (current != NULL) {
+			int sd = current->socket;
+			client_node_t *next = current->next;
+
+			if (FD_ISSET(sd, &readfds)) {
+				char buffer[256];
+				ssize_t read_bytes = read(sd, buffer, sizeof(buffer) - 1);
+
+				if (read_bytes == 0) {
+					printf("Client with socket %d has disconnected\n", sd);
+					remove_client(sd);
+				} else if (read_bytes > 0) {
+					buffer[read_bytes] = '\0';
+					printf("Received %s from client %d\n", buffer, sd);
+					
+					if (write (sd, greeting_message, strlen(greeting_message) < 1)) {
+						perror("Error writing back to socket\n");
+						remove_client(sd);
+					}
+				} else if (read_bytes < 0) {
+					perror("Error reading from client\n");
+					remove_client(sd);
+				}
+			}
+			current = next;
 		}
-		shutdown(accept_fd, 2);
-		close(accept_fd);
 	}
-	close(sd);
+	close(ls);
 	return 0;
 }
 
