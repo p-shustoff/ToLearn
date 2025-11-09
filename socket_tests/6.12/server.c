@@ -12,6 +12,8 @@ typedef struct client_node {
 	int socket;
 	struct sockaddr_in address;
 	struct client_node *next;
+	char buffer[1024];
+	size_t buf_len;
 } client_node_t;
 
 client_node_t *clients_head = NULL;
@@ -22,6 +24,8 @@ void add_client(int socket, struct sockaddr_in address)
 	new_client->socket = socket;
 	new_client->address = address;
 	new_client->next = clients_head;
+	memset(new_client->buffer, 0, sizeof(new_client->buffer));
+	new_client->buf_len = 0;
 	clients_head = new_client;
 }
 
@@ -107,7 +111,7 @@ int main(int argc, char *argv[])
 		exit(4);
 	}
 
-	const char *greeting_message = "Ok";
+	const char *greeting_message = "\n>> Ok\n";
 
 	while(1) {
 	
@@ -179,19 +183,31 @@ int main(int argc, char *argv[])
 			client_node_t *next = current->next;
 
 			if (FD_ISSET(sd, &readfds)) {
-				char buffer[256];
-				ssize_t read_bytes = read(sd, buffer, sizeof(buffer) - 1);
+				char temp_buf[256];
+				ssize_t read_bytes = read(sd, temp_buf, sizeof(temp_buf) - 1);
 
 				if (read_bytes == 0) {
 					printf("Client with socket %d has disconnected\n", sd);
 					remove_client(sd);
 				} else if (read_bytes > 0) {
-					buffer[read_bytes] = '\0';
-					printf("Received %s from client %d\n", buffer, sd);
-					
-					if (write (sd, greeting_message, strlen(greeting_message) < 1)) {
-						perror("Error writing back to socket\n");
-						remove_client(sd);
+					memcpy(current->buffer + current->buf_len, temp_buf, read_bytes);
+					current->buf_len += read_bytes;
+					current->buffer[current->buf_len] = '\0';
+
+					char *newline;
+        			while ((newline = strchr(current->buffer, '\n')) != NULL) {
+            			*newline = '\0';
+            			printf("Received FULL message: %s from client %d\n", current->buffer, sd);
+
+			            if (write(sd, greeting_message, strlen(greeting_message)) < 0) {
+			                perror("Error writing back to socket\n");
+				                remove_client(sd);
+			                break;
+						}
+					    size_t remaining = current->buf_len - (newline - current->buffer) - 1;
+					    memmove(current->buffer, newline + 1, remaining);
+					    current->buf_len = remaining;
+					    current->buffer[current->buf_len] = '\0';
 					}
 				} else if (read_bytes < 0) {
 					perror("Error reading from client\n");
